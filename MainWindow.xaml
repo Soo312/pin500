@@ -1,0 +1,108 @@
+﻿<Window x:Class="RaonShortchaser_UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RaonShortchaser_UI"
+        xmlns:control="clr-namespace:RaonShortchaser_UI.Control"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="800" Width="1600" DataContextChanged="Window_DataContextChanged" Loaded="Window_Loaded"
+        
+        >
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="30"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+
+        <ToolBarTray Grid.Row="0" Grid.ColumnSpan="2">
+            <ToolBar>
+                <Label Content ="Project Dir"/>
+                <ComboBox x:Name="cbPath" Width="500" IsEditable="False" SelectionChanged="cbPath_SelectionChanged"/>
+                <Button Content="..." Click="Button_Click"/>
+                <Separator Margin="10,0,0,0"/>
+                <Button Content="Save Project" Click="Save_Pr_Button" Margin="10,0,0,0"/>
+            </ToolBar>
+        </ToolBarTray>
+        <Button Content="Save as csv" Grid.Column="1" Background="White" Width="100" HorizontalAlignment="Left"/>
+
+        <ToolBarTray Grid.Row="1" Grid.ColumnSpan="2">
+            <ToolBar>
+                <Label Content="Now Selected Pin : "/>
+                <Label Content="{Binding lbPin,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="10,0,0,0"/>
+                <Label Content="Resistance Value : "/>
+                <Label Content="{Binding lbResistance,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+            </ToolBar>
+        </ToolBarTray>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Column="0" Grid.Row="2">
+            <Grid x:Name="gridPin" Margin="10,10,10,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="30"/>
+                </Grid.ColumnDefinitions>
+
+                <DataGrid x:Name="Datagrid"
+                          Grid.Column="0" Margin="10,0,10,0" AutoGenerateColumns="False" SelectionUnit="Cell" HorizontalContentAlignment="Center" CanUserAddRows="False"
+                          SelectionMode="Single" ItemsSource="{Binding Binding_DataGrid,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                          SelectedItem="{Binding SelectedItem,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                          SelectedCellsChanged="DataGrid_SelectedCellsChanged"
+                          >
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="RowNum" Width="70" Binding="{Binding Row,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"  />
+                        <DataGridTextColumn Header="Column 1" Width="1.2*" Binding="{Binding Measures_Row1,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
+                        <DataGridTextColumn Header="Column 2" Width="1.2*" Binding="{Binding Measures_Row2,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
+                        <DataGridTextColumn Header="Column 3" Width="1.2*" Binding="{Binding Measures_Row3,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
+                        <DataGridTextColumn Header="Column 4" Width="1.2*" Binding="{Binding Measures_Row4,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
+                        <DataGridTextColumn Header="Column 5" Width="1.2*" Binding="{Binding Measures_Row5,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
+
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </ScrollViewer>
+
+        <Grid Grid.Row="2" Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <control:SectorControl x:Name="sector0" Grid.Row="0" DataContext="{Binding sect_1, UpdateSourceTrigger=PropertyChanged}"  />
+            <control:SectorControl x:Name="sector1" Grid.Row="1" DataContext="{Binding sect_2, UpdateSourceTrigger=PropertyChanged}" />
+            <control:SectorControl x:Name="sector2" Grid.Row="2" DataContext="{Binding sect_3, UpdateSourceTrigger=PropertyChanged}" />
+            <control:SectorControl x:Name="sector3" Grid.Row="3" DataContext="{Binding sect_4, UpdateSourceTrigger=PropertyChanged}" />
+            <control:SectorControl x:Name="sector4" Grid.Row="4" DataContext="{Binding sect_5, UpdateSourceTrigger=PropertyChanged}" />
+
+            <!--<control:DutControl x:Name="dut00" Grid.Column="0" Grid.Row="0" ItemsSource="{Binding dut00}" />
+            <control:DutControl x:Name="dut01" Grid.Column="1" Grid.Row="0" ItemsSource="{Binding dut01}"/>
+            <control:DutControl x:Name="dut02" Grid.Column="2" Grid.Row="0" ItemsSource="{Binding dut02}"/>
+            <control:DutControl x:Name="dut03" Grid.Column="3" Grid.Row="0" ItemsSource="{Binding dut03}"/>
+            <control:DutControl x:Name="dut10" Grid.Column="0" Grid.Row="1" ItemsSource="{Binding dut10}"/>
+            <control:DutControl x:Name="dut11" Grid.Column="1" Grid.Row="1" ItemsSource="{Binding dut11}"/>
+            <control:DutControl x:Name="dut12" Grid.Column="2" Grid.Row="1" ItemsSource="{Binding dut12}"/>
+            <control:DutControl x:Name="dut13" Grid.Column="3" Grid.Row="1" ItemsSource="{Binding dut13}"/>
+            <control:DutControl x:Name="dut20" Grid.Column="0" Grid.Row="2" ItemsSource="{Binding dut20}"/>
+            <control:DutControl x:Name="dut21" Grid.Column="1" Grid.Row="2" ItemsSource="{Binding dut21}"/>
+            <control:DutControl x:Name="dut22" Grid.Column="2" Grid.Row="2" ItemsSource="{Binding dut22}"/>
+            <control:DutControl x:Name="dut23" Grid.Column="3" Grid.Row="2" ItemsSource="{Binding dut23}"/>
+            <control:DutControl x:Name="dut30" Grid.Column="0" Grid.Row="3" ItemsSource="{Binding dut30}"/>
+            <control:DutControl x:Name="dut31" Grid.Column="1" Grid.Row="3" ItemsSource="{Binding dut31}"/>
+            <control:DutControl x:Name="dut32" Grid.Column="2" Grid.Row="3" ItemsSource="{Binding dut32}"/>
+            <control:DutControl x:Name="dut33" Grid.Column="3" Grid.Row="3" ItemsSource="{Binding dut33}"/>
+            <control:DutControl x:Name="dut40" Grid.Column="0" Grid.Row="4" ItemsSource="{Binding dut40}"/>
+            <control:DutControl x:Name="dut41" Grid.Column="1" Grid.Row="4" ItemsSource="{Binding dut41}"/>
+            <control:DutControl x:Name="dut42" Grid.Column="2" Grid.Row="4" ItemsSource="{Binding dut42}"/>
+            <control:DutControl x:Name="dut43" Grid.Column="3" Grid.Row="4" ItemsSource="{Binding dut43}"/>-->
+        </Grid>
+        
+    </Grid>
+</Window>
