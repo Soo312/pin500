@@ -16,8 +16,7 @@
         <Label Grid.Row="0" Content="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
         <ComboBox Grid.Row="1" 
                   ItemsSource="{Binding ItemsSource,UpdateSourceTrigger=PropertyChanged}"
-                  SelectedItem="{Binding SelectedItem, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
-                  SelectionChanged="{Binding SelectionChanged, UpdateSourceTrigger=PropertyChanged}"
+                  SelectedIndex="{Binding SelectedIndex,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                   >
         </ComboBox>
 

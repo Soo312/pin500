@@ -21,9 +21,21 @@ using System.Collections;
 using System.Windows.Forms;
 using com.sun.org.apache.bcel.@internal.generic;
 using System.Windows.Input;
+using Microsoft.TeamFoundation.Build.WebApi;
+using java.beans;
+using Microsoft.VisualStudio.Services.WebApi;
 
 namespace RaonShortchaser_UI
 {
+
+    public class ProgressEventArgs : EventArgs
+    {
+        public int Status { get; private set; }
+        public ProgressEventArgs(int status)
+        {
+            Status = status;
+        }
+    }
 
     public abstract class BaseModel : INotifyPropertyChanged
     {
@@ -44,6 +56,22 @@ namespace RaonShortchaser_UI
         }
     }
 
+    public class MyEventArgs : EventArgs
+    {
+        private string msg;
+
+        public MyEventArgs(string messageData)
+        {
+            msg = messageData;
+        }
+        public string Message
+        {
+            get { return msg; }
+            set { msg = value; }
+        }
+
+    }
+
 
 
     public class PinInfo : BaseModel
@@ -52,7 +80,7 @@ namespace RaonShortchaser_UI
         public double reg { get; set; }
         public object TAG;
         public PinInfo() { }
-        public PinInfo(int id,double value)
+        public PinInfo(int id, double value)
         {
             this.id = id;
             this.reg = value;
@@ -97,18 +125,19 @@ namespace RaonShortchaser_UI
 
     public class DutInfolist : BaseModel
     {
-        
+
         public int Dutid { get; set; }
 
 
         private List<DutInfo> _dutinfolist = new List<DutInfo>();
         public string Name { get { return "DUT_" + Dutid.ToString(); } }
 
-        private CollectionView _ItemsSource ;
+        private CollectionView _ItemsSource;
         private string _SelectedItem;
         public bool isSelected;
+
         public string SelectedItem
-        { 
+        {
             get
             {
                 return _SelectedItem;
@@ -121,20 +150,56 @@ namespace RaonShortchaser_UI
                     {
                         _SelectedItem = value;
                         isSelected = true;
-                        returnId.setReturnID(Dutid);
+
+
                     }
                     else
                     {
                         isSelected = false;
                     }
+                    OnPropertyChange("SelectedItem");
                 }
             }
 
+
+        }
+        private int _SelectedIndex;
+        public int SelectedIndex
+        {
+            get
+            { return _SelectedIndex; }
+            set
+            {
+                //if(value != _SelectedIndex)
+                if (value != _SelectedIndex)
+                {
+                    _SelectedIndex = value;
+                    UpdateStatus(Dutid);
+                    OnPropertyChange("SelectedIndex");
+
+                }
+                else
+                {
+                    _SelectedIndex = value;
+                    OnPropertyChange("SelectedIndex");
+                }
+                //else
+                //{
+
+                //    OnPropertyChange("SelectedIndex");
+                //}
+
+            }
+        }
+
+        public void SettingIndex(int num)
+        {
+            _SelectedIndex = num;
+            OnPropertyChange("SelectedIndex");
         }
 
         public string Time;
 
-        public ICommand SelectionChanged { get; set; }
 
 
         public CollectionView ItemsSource
@@ -151,16 +216,16 @@ namespace RaonShortchaser_UI
             }
 
         }
-        
+
 
         public List<DutInfo> dutinfolist
         {
             get { return _dutinfolist; }
-            set 
-            { if (value != null) 
+            set
+            { if (value != null)
                 {
-                    _dutinfolist = value; 
-                } 
+                    _dutinfolist = value;
+                }
             }
         }
 
@@ -169,12 +234,14 @@ namespace RaonShortchaser_UI
 
         }
 
+
         ReturnID returnId;
-        public DutInfolist(int num,List<DutInfo> dutinfolist, ReturnID returnId)
+        public DutInfolist(int num, List<DutInfo> dutinfolist, ReturnID returnId)
         {
             Dutid = num;
             this.dutinfolist = dutinfolist;
-            this.returnId = returnId;
+
+            _SelectedIndex = _dutinfolist.Count + 1;
 
             //    List<string> testlist = new List<string>();
             //    for (int i = 0; i < 5; i++)
@@ -182,6 +249,18 @@ namespace RaonShortchaser_UI
             //        //testlist.Add);
             //    }
             //    _ItemsSource = new CollectionView(testlist);
+        }
+
+        public delegate void StatusUpdatehadler(object sender, ProgressEventArgs e);
+        public event StatusUpdatehadler OnUpdateStatus;
+
+
+        private void UpdateStatus(int status)
+        {
+            if (OnUpdateStatus == null) return;
+
+            ProgressEventArgs args = new ProgressEventArgs(status);
+            OnUpdateStatus(this, args);
         }
 
 
@@ -203,12 +282,13 @@ namespace RaonShortchaser_UI
                 namelist.Add(_dutinfolist[i].id.ToString());
             }
             namelist.Add("notSelected");
+
             _ItemsSource = new CollectionView(namelist);
         }
 
         public void setDutinfolist(DutInfolist dutInfolist)
         {
-            if(dutinfolist != null)
+            if (dutinfolist != null)
             {
                 this.dutinfolist = dutinfolist;
             }
@@ -216,7 +296,7 @@ namespace RaonShortchaser_UI
 
         public int returnComboboxid()
         {
-            if(isSelected)
+            if (isSelected)
                 return Dutid;
             return 9999;
         }
@@ -234,7 +314,6 @@ namespace RaonShortchaser_UI
 
 
 
-        protected List<Dut> duts;   //   runtime
 
         public DutInfo dut_1 { get; set; }
         public DutInfo dut_2 { get; set; }
@@ -263,10 +342,10 @@ namespace RaonShortchaser_UI
             set { _dutlist_4 = value; }
         }
 
-        public SectorInfo(int num,ReturnID returnid)
+        public SectorInfo(int num, ReturnID returnid)
         {
             this.sectorid = num;
-            _dutlist_1 = new DutInfolist(sectorid*4+1, null, returnid);
+            _dutlist_1 = new DutInfolist(sectorid * 4 + 1, null, returnid);
             _dutlist_2 = new DutInfolist(sectorid * 4 + 2, null, returnid);
             _dutlist_3 = new DutInfolist(sectorid * 4 + 3, null, returnid);
             _dutlist_4 = new DutInfolist(sectorid * 4 + 4, null, returnid);
@@ -308,20 +387,22 @@ namespace RaonShortchaser_UI
         public SectorInfo sect_4 { get; set; }
         public SectorInfo sect_5 { get; set; }
 
-        ReturnID returnid;
+        public ReturnID returnid;
 
         public object TAG;
+
+        private List<MainDataGrid_class> _ItmesSource;
 
         public ProejctInfo()
         {
             returnid = new ReturnID();
 
-            sect_1 = new SectorInfo(0,returnid);
-            sect_2 = new SectorInfo(1,returnid);
-            sect_3 = new SectorInfo(2,returnid);
-            sect_4 = new SectorInfo(3,returnid);
-            sect_5 = new SectorInfo(4,returnid);
-            
+            sect_1 = new SectorInfo(0, returnid);
+            sect_2 = new SectorInfo(1, returnid);
+            sect_3 = new SectorInfo(2, returnid);
+            sect_4 = new SectorInfo(3, returnid);
+            sect_5 = new SectorInfo(4, returnid);
+
         }
         public void setSector(int num, SectorInfo value)
         {
@@ -332,7 +413,20 @@ namespace RaonShortchaser_UI
                 case 3: sect_3 = value; sect_3.sectorid = num; break;
                 case 4: sect_4 = value; sect_4.sectorid = num; break;
                 case 5: sect_5 = value; sect_5.sectorid = num; break;
-                default:break;
+                default: break;
+            }
+        }
+
+        public List<MainDataGrid_class> Data_Grid_ItemsSource
+        {
+            get { return _ItmesSource; }
+            set
+            {
+                if(value != null)
+                {
+                    _ItmesSource=value;
+                    OnPropertyChange("Data_Grid_ItemsSource");
+                }
             }
         }
 
@@ -372,14 +466,14 @@ namespace RaonShortchaser_UI
             sectorInfos.Add(sect_4);
             sectorInfos.Add(sect_5);
 
-            foreach(SectorInfo sec in sectorInfos.ToArray())
+            foreach (SectorInfo sec in sectorInfos.ToArray())
             {
                 List<DutInfolist> duts = new List<DutInfolist>();
                 duts.Add(sec.dutlist_1);
                 duts.Add(sec.dutlist_2);
                 duts.Add(sec.dutlist_3);
                 duts.Add(sec.dutlist_4);
-                foreach(DutInfolist dutinfo in duts)
+                foreach (DutInfolist dutinfo in duts)
                 {
                     if (dutinfo.isSelected == true)
                         return dutinfo.Dutid;
@@ -387,14 +481,41 @@ namespace RaonShortchaser_UI
             }
             return 9999;
         }
+
     }
 
-    public class ReturnID
+    public class ReturnID : INotifyPropertyChanged
     {
-        private int setDutid;
+        private int _setDutid;
+        private List<PinInfo> pins = new List<PinInfo>();
+
+
         public int getReturnID()
         {
-            return setDutid;
+            return _setDutid;
+        }
+
+        public int setDutid
+        {
+            get { return _setDutid; }
+            set
+            {
+                if (value != _setDutid)
+                {
+                    _setDutid = value;
+                    INotifyPropertyChanged("setDutid");
+                }
+            }
+        }
+        private void INotifyPropertyChanged(string propertyname)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
+        }
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public void setPins(List<PinInfo> value)
+        {
+            this.pins = value;
         }
         public void setReturnID(int num)
         {
@@ -409,11 +530,9 @@ namespace RaonShortchaser_UI
 
 
 
-
-
     public class DataViewModel : INotifyPropertyChanged
     {
-        
+
         public DataViewModel()
         {
 
@@ -424,32 +543,30 @@ namespace RaonShortchaser_UI
 
         public List<DutInfo> dutlist { get; set; }
 
-        private List<DutClass> dutclasses = new List<DutClass>();
-
-        #region Binding
-        private List<MainDataGrid_class> _Binding_DataGrid;
+        
+        private List<MainDataGrid_class> _Data_Grid_ItemsSource;
         [XmlElement("Project")] private ProejctInfo project = new ProejctInfo();
         public void ProjectSave()
         {
             using (System.IO.StreamWriter wr = new System.IO.StreamWriter(@".\project.xml"))
             {
                 XmlSerializer xs = new XmlSerializer(typeof(ProejctInfo));
-                xs.Serialize(wr, project) ;
+                xs.Serialize(wr, project);
             }
         }
-        public List<MainDataGrid_class> Binding_DataGrid
+        public List<MainDataGrid_class> Data_Grid_ItemsSource
         {
             //입력만 받는거
             get
             {
-                return _Binding_DataGrid;
+                return _Data_Grid_ItemsSource;
             }
             set
             {
                 if (value != null)
                 {
-                    _Binding_DataGrid = value;
-                    OnPropertyChanged("Binding_DataGrid");
+                    _Data_Grid_ItemsSource = value;
+                    OnPropertyChanged("Data_Grid_ItemsSource");
                 }
             }
         }
@@ -464,7 +581,7 @@ namespace RaonShortchaser_UI
                     _SelectedItem = value;
                     lbResistance = value.ToString(); ;
                 }
-                
+
             }
         }
         private string _lbPin;
@@ -496,7 +613,7 @@ namespace RaonShortchaser_UI
                     OnPropertyChanged("lbResistance");
                 }
             }
-            
+
 
         }
         public void setSelectedItem_Binding(double selected)
@@ -510,81 +627,47 @@ namespace RaonShortchaser_UI
                 SelectedItem = 0;
             }
         }
-        public List<DutClass> loadProject(string path)
-        {
-            //todo
 
-            List<DutClass> loadproject = null;
-            if(System.IO.Directory.Exists(path))
-            {
-                XmlSerializer serializer = new XmlSerializer(typeof(List<DutClass>));
-                using(System.IO.FileStream filestream=new System.IO.FileStream(path, System.IO.FileMode.Open))
-                {
-                    try
-                    {
-                        loadproject = (List<DutClass>)serializer.Deserialize(filestream);
 
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.Print(ex.StackTrace);
-                        System.Diagnostics.Debug.Print(ex.Message);
-                    }
-                }
+ 
+        //public List<DutClass> test()
+        //{
+        //    List<DutClass> ret = new List<DutClass>();
+        //    DutClass dutclass = new DutClass();
+        //    Dut dut1 = new Dut(1);
+        //    Dut dut2 = new Dut(2);
+        //    Dut dut3 = new Dut(3);
+        //    Dut dut0 = new Dut(0);
 
-            }
-            return loadproject;
-        }
+        //    for (int i = 0; i < 500; i++)
+        //    {
+        //        dut0.AddPin(new Pin_Value(i, i - 100));
+        //    }
+        //    for (int i = 0; i < 500; i++)
+        //    {
+        //        dut1.AddPin(new Pin_Value(i, i - 200));
+        //    }
+        //    for (int i = 0; i < 500; i++)
+        //    {
+        //        dut2.AddPin(new Pin_Value(i, i - 300));
+        //    }
+        //    for (int i = 0; i < 500; i++)
+        //    {
+        //        dut3.AddPin(new Pin_Value(i, i - 400));
+        //    }
+        //    dutclass.AddDut(dut0);
+        //    dutclass.AddDut(dut1);
+        //    dutclass.AddDut(dut2);
+        //    dutclass.AddDut(dut3);
 
-        public void settingProject(string path=null)
-        {
-            dutclasses=test();
-
-            //if (path != null)
-            //{
-            //    dutclasses=loadProject(path);
-            //}
-            
-        }
-        public List<DutClass> test()
-        {
-            List<DutClass> ret = new List<DutClass>();
-            DutClass dutclass = new DutClass();
-            Dut dut1 = new Dut(1);
-            Dut dut2 = new Dut(2);
-            Dut dut3 = new Dut(3);
-            Dut dut0 = new Dut(0);
-
-            for(int i =0;i<500;i++)
-            {
-                dut0.AddPin(new Pin_Value(i, i - 100));   
-            }
-            for (int i = 0; i < 500; i++)
-            {
-                dut1.AddPin(new Pin_Value(i, i - 200));
-            }
-            for (int i = 0; i < 500; i++)
-            {
-                dut2.AddPin(new Pin_Value(i, i - 300));
-            }
-            for (int i = 0; i < 500; i++)
-            {
-                dut3.AddPin(new Pin_Value(i, i - 400));
-            }
-            dutclass.AddDut(dut0);
-            dutclass.AddDut(dut1);
-            dutclass.AddDut(dut2);
-            dutclass.AddDut(dut3);
-
-            ret.Add(dutclass);
+        //    ret.Add(dutclass);
 
 
 
-            return ret;
+        //    return ret;
 
-        }
+        //}
 
-        List<SectorControl> sectorlist = new List<SectorControl>();
         //private SectorControl _sector0, _sector1, _sector2, _sector3, _sector4;
         //public RaonShortchaser_UI.Control.SectorControl sector0 
         //{
@@ -673,35 +756,7 @@ namespace RaonShortchaser_UI
         //}
 
 
-        #region ListDut
-        private DutClass _dut00, _dut01, _dut02, _dut03;
-        private DutClass _dut10, _dut11, _dut12, _dut13;
-        private DutClass _dut20, _dut21, _dut22, _dut23;
-        private DutClass _dut30, _dut31, _dut32, _dut33;
-        private DutClass _dut40, _dut41, _dut42, _dut43;
-        #endregion
 
-
-        public List<Dut> dut00 
-        { 
-            get 
-            { return _dut00.getDutList(); } 
-            set 
-            {
-                if (_dut00 == null)
-                {
-                    _dut00 = new DutClass();
-                    if (value != null)
-                    {
-                        _dut00.setDutList(value);
-                        OnPropertyChanged("dut00");
-                    }
-                }
-
-            } 
-        }
-
-        #endregion
 
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -715,311 +770,106 @@ namespace RaonShortchaser_UI
         }
     }
 
-    public class Pin_Value
-    {
-        //Pin-value;
-        [XmlElement("Pin")]private int PinNum;
-        [XmlElement("value")] private double value;
-        [XmlElement("Pin_Check_Time")] public string datetime;
-
-        public Pin_Value() { }
-        public Pin_Value(int num, double Measures)
-        {
-            this.PinNum = num;
-            this.value = Measures;
-            this.datetime = DateTime.Now.ToString("yy-MM-dd-HH-mm-ss");
-        }
-        public Pin_Value(int num, double Measures,DateTime datetime)
-        {
-            this.PinNum = num;
-            this.value = Measures;
-            this.datetime = datetime.ToString("yy-MM-dd-HH-mm-ss");
-        }
-        public int getKey()
-        {
-            return PinNum;
-        }
-        public double getValue()
-        {
-            return value;
-        }
-        public int pinNum
-        {
-            get { return PinNum; }
-            set { }
-        }
-        public double Resistance
-        {
-            get { return value; }
-            set { }
-        }
-        public string dateTime
-        {
-            get { return datetime; }
-            set { }
-        }
-        
-    }
-    
-
-    public class Dut
-    {
-        [XmlElement("Dut")] private int dutid;
-        [XmlElement] private List<Pin_Value> pin_Value_Times = new List<Pin_Value>();
-        [XmlElement] private string _name;
-
-        public Dut() { }
-        public Dut(int id) 
-        {
-            dutid = id;
-        }
-        public Dut(int id, List<Pin_Value> pin_value)
-        {
-            dutid = id;
-            pin_Value_Times = pin_value;
-            _name = DateTime.Now.ToString("yy-MM-dd-HH-mm");
-        }
-        public string name
-        {
-            get
-            {
-                return _name;
-            }
-            set { }
-        }
-        public List<Pin_Value> Pin_Values
-        {
-            get { return pin_Value_Times; }
-            set { }
-        }
-
-        public int Getid()
-        {
-            return dutid;
-        }
-
-        public void AddPin(Pin_Value pvt)
-        {
-            int value_id = pvt.getKey();
-            if (CompareList(value_id))//true면 겹치는게 있다 false면 겹치는게없다
-            {
-
-            }
-            else
-            {
-                pin_Value_Times.Add(pvt);
-                List<Pin_Value> sortlist = pin_Value_Times.OrderBy(x => x.getKey()).ToList();
-                pin_Value_Times = sortlist;
-            }
-        }
-        
-        public List<Pin_Value> GetPinList()
-        {
-            return pin_Value_Times;
-        }
-
-        public bool CompareList(int num)
-        {
-            bool ret = false;
-
-            foreach (Pin_Value pvt in pin_Value_Times)
-            {
-                if(pvt.getKey() == num)
-                {
-                    ret = true;
-                    break;
-                }
-            }
-
-
-            return ret;
-
-        }
-    }
-    public class Sector
-    {
-        [XmlElement] private List<Dut> dutlist = new List<Dut>();
-        
-        public Sector()
-        {
-        }
-        
-        public void AddDut(Dut dut)
-        {
-            if (dutlist.Count < 4)
-                dutlist.Add(dut);
-            else
-                return;
-        }
-        public void ChangeDut(Dut dut)
-        {
-            int count=0;
-            bool existsame = false;
-            foreach(Dut eachdut in dutlist)
-            {
-                if(dut.Getid()==eachdut.Getid())
-                {
-                    existsame = true;
-                    break;
-                }
-                count++;
-            }
-            if(existsame)
-            {
-                dutlist[count] = dut;
-            }
-        }
-    }
-
-    public class DutClass
-    {
-        [XmlElement("Dutid")]public int dutlistid;
-        [XmlElement]private List<Dut> dutlist = new List<Dut>();
-        private string _name;//name은 저장시간으로 사용할것
-
-        public List<Dut> DutList
-        {
-            get { return dutlist;}
-            set { }
-        }
-        public DutClass()
-        {
-            name = DateTime.Now.ToString("yy_MM_dd_HH_mm");
-        }
-        public DutClass(int dutlistid)
-        {
-            this.dutlistid = dutlistid;
-            name = DateTime.Now.ToString("yy_MM_dd_HH_mm");
-        }
-
-        public void AddDut(Dut dut)
-        {
-            if (dutlistid == dut.Getid())
-                dutlist.Add(dut);
-            else
-                return;
-        }
-        public int GetDutid()
-        {
-            return dutlistid;
-        }
-        
-        public DutClass getDutClass()
-        {
-            return this;
-        }
-        public string name
-        {
-            get { return _name; }
-            set
-            {
-                if (value != null)
-                {
-                    _name = value;
-                }
-            }
-        }
-        public void setDutList(List<Dut> dutlist)
-        {
-            if (dutlist != null)
-                this.dutlist = dutlist;
-        }
-        public List<Dut> getDutList()
-        {
-            return dutlist;
-        }
-
-
-    }
-
-
 
     public class MainDataGrid_class //출력 바인딩됨
     {
-        [XmlElement("Measures")]private Pin_Value key_result;
-        private double _Measures_Row1;
-        private double _Measures_Row2;
-        private double _Measures_Row3;
-        private double _Measures_Row4;
-        private double _Measures_Row5;
+        [XmlElement("Measures")] private PinInfo key_result;
+        private int _Row;
+        private double _Row1;
+        private double _Row2;
+        private double _Row3;
+        private double _Row4;
+        private double _Row5;
         public MainDataGrid_class()
-        { 
-        }
-        public MainDataGrid_class(Pin_Value key_result)
         {
-            this.key_result = key_result;
-            setMeasures(key_result);
         }
-        public void setKey_Value(Pin_Value pin_value)
+
+        public void setPin(PinInfo pin)
         {
-            key_result=pin_value;
-        }
-        public void setMeasures(Pin_Value Measures)
-        {
-            if (Measures.getKey() >= 0 && Measures.getKey() < 100)
-                _Measures_Row1 = Measures.getValue();
-            else if (Measures.getKey() >= 100 && Measures.getKey() < 200)
-                _Measures_Row2 = Measures.getValue();
-            else if (Measures.getKey() >= 200 && Measures.getKey() < 300)
-                _Measures_Row3 = Measures.getValue();
-            else if (Measures.getKey() >= 300 && Measures.getKey() < 400)
-                _Measures_Row4 = Measures.getValue();
-            else if (Measures.getKey() >= 400 && Measures.getKey() < 500)
-                _Measures_Row5 = Measures.getValue();
+            if (pin.id >= 0 && pin.id < 100)
+            {
+                _Row1 = pin.reg;
+                _Row = pin.id % 100;
+                return;
+            }
+            else if (pin.id >= 100 && pin.id < 200)
+            {
+                _Row2 = pin.reg;
+                return;
+            }
+            else if (pin.id >= 200 && pin.id < 300)
+            {
+                _Row3 = pin.reg;
+                return;
+            }
+            else if (pin.id >= 300 && pin.id < 400)
+            {
+                _Row4 = pin.reg;
+                return;
+            }
+            else if (pin.id >= 400 && pin.id < 500)
+            {
+                _Row5 = pin.reg;
+                return;
+            }
+            else return; 
+
+
+
         }
         public int Row
         {
             get
             {
-                return key_result.getKey();
+                return _Row;
             }
             set
             { }
         }
-        public double Measures_Row1
+        public double Row1
         {
             get
             {
-                return _Measures_Row1;
+                return _Row1;
             }
             set { }
         }
-        public double Measures_Row2
+        public double Row2
         {
             get
             {
-                return _Measures_Row2;
+                return _Row2;
             }
             set { }
         }
-        public double Measures_Row3
+        public double Row3
         {
             get
             {
-                return _Measures_Row3;
+                return _Row3;
             }
             set { }
         }
-        public double Measures_Row4
+        public double Row4
         {
             get
             {
-                return _Measures_Row4;
+                return _Row4;
             }
             set { }
         }
-        public double Measures_Row5
+        public double Row5
         {
             get
             {
-                return _Measures_Row5;
+                return _Row5;
             }
             set { }
         }
 
         public int getNum()
         {
-            return key_result.getKey();
+            return key_result.id;
         }
     }
 
@@ -1029,7 +879,7 @@ namespace RaonShortchaser_UI
         private int id;
         private int Count;
         private string Time;
-        public Semicon_DataGrid_class(int i1,DateTime datetime)
+        public Semicon_DataGrid_class(int i1, DateTime datetime)
         {
             Count = i1;
             Time = datetime.ToString();

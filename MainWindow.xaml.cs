@@ -19,6 +19,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Microsoft.TeamFoundation.WorkItemTracking.Client;
+using Microsoft.TeamFoundation.Server;
 
 namespace RaonShortchaser_UI
 {
@@ -37,38 +38,141 @@ namespace RaonShortchaser_UI
 
         private delegate int Returndutid(ProejctInfo proejct);
 
+        List<DutInfolist> dutInfolists;
         public MainWindow()
         {
             dataviewmodel = new DataViewModel();
-            this.DataContext = dataviewmodel;
+            //this.DataContext = dataviewmodel;
             InitializeComponent();
-
-            DutDefinition();
 
             
         }
+        ProejctInfo project;
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            ProejctInfo project = new ProejctInfo();
-            //project.sect_1.dutlist_1.ItmesSource.Columns.Add("Key", typeof(string));
-            //project.sect_1.dutlist_1.ItmesSource.Columns.Add("Value", typeof(string));
 
-            //project.sect_1.dutlist_1.ItmesSource.Rows.Add(new string[] { "1", "a" });
-            //project.sect_1.dutlist_1.ItmesSource.Rows.Add(new string[] { "2", "b" });
-
+            project = new ProejctInfo();
             project = makeRandom();
             project.ProjectUpdate();//project자체에는 setter를 할수가없어서 비슷한 함수를만들었다
-
+            dutInfolists = new List<DutInfolist>();
+            DutlistaddEvent(project, dutInfolists);
 
             this.DataContext = project;
         }
 
+        private void UpdateStatus(object sender, ProgressEventArgs e)
+        {
+            int nowSelectedDut=(sender as DutInfolist).Dutid ;
+            int nowSelectedIndex = (sender as DutInfolist).SelectedIndex ;
+
+
+            //선택된 하나의 combobox만 on 나머지 off
+            if (dutInfolists != null)
+            {
+                List<DutInfolist> returnlist = new List<DutInfolist>();
+                foreach (DutInfolist dutlist in dutInfolists)
+                {
+                    if (dutlist.Dutid == nowSelectedDut)
+                    {
+                        dutlist.SettingIndex(nowSelectedIndex);
+                    }
+                    else
+                    {
+                        dutlist.SettingIndex(dutlist.ItemsSource.Count-1);
+                    }
+                    returnlist.Add(dutlist);
+                }
+                dutInfolists = returnlist;
+            }
+
+            List<PinInfo> pins=dutInfolists[nowSelectedDut].dutinfolist[nowSelectedIndex].pins;
+            List<MainDataGrid_class> displayclass = new List<MainDataGrid_class>();
+            if(pins.Count>0 && pins.Count <= 500)
+            {
+                MainDataGrid_class openvalue = new MainDataGrid_class();
+                foreach (PinInfo pin in pins)
+                {
+                    
+                    if (pin.id / 100 == 0)
+                    {
+                        openvalue =new MainDataGrid_class();
+                        openvalue.setPin(pin);
+                        System.Diagnostics.Debug.Print("");
+                        displayclass.Add(openvalue);
+                    }
+                    else
+                    {
+                        openvalue = displayclass[pin.id % 100];
+                        openvalue.setPin(pin);
+                        displayclass[pin.id%100] = openvalue;
+                    }
+
+                }
+                project.Data_Grid_ItemsSource = displayclass;
+            }
+
+
+            System.Diagnostics.Debug.Print("Dut_"+ nowSelectedDut.ToString()+" DutIndex"+nowSelectedIndex.ToString()+ " dutlist_Selection_Changed");
+        }
+        private void DutlistaddEvent(ProejctInfo project, List<DutInfolist> dutinfolists)
+        {
+            dutinfolists.Add(project.sect_1.dutlist_1);
+            dutinfolists.Add(project.sect_1.dutlist_2);
+            dutinfolists.Add(project.sect_1.dutlist_3);
+            dutinfolists.Add(project.sect_1.dutlist_4);
+
+            dutinfolists.Add(project.sect_2.dutlist_1);
+            dutinfolists.Add(project.sect_2.dutlist_2);
+            dutinfolists.Add(project.sect_2.dutlist_3);
+            dutinfolists.Add(project.sect_2.dutlist_4);
+
+            dutinfolists.Add(project.sect_3.dutlist_1);
+            dutinfolists.Add(project.sect_3.dutlist_2);
+            dutinfolists.Add(project.sect_3.dutlist_3);
+            dutinfolists.Add(project.sect_3.dutlist_4);
+
+            dutinfolists.Add(project.sect_4.dutlist_1);
+            dutinfolists.Add(project.sect_4.dutlist_2);
+            dutinfolists.Add(project.sect_4.dutlist_3);
+            dutinfolists.Add(project.sect_4.dutlist_4);
+
+            dutinfolists.Add(project.sect_5.dutlist_1);
+            dutinfolists.Add(project.sect_5.dutlist_2);
+            dutinfolists.Add(project.sect_5.dutlist_3);
+            dutinfolists.Add(project.sect_5.dutlist_4);
+
+            foreach(DutInfolist dutInfo in dutinfolists)
+            {
+                dutInfo.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            }
+            //project.sect_1.dutlist_1.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_1.dutlist_2.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_1.dutlist_3.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_1.dutlist_4.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_2.dutlist_1.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_2.dutlist_2.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_2.dutlist_3.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_2.dutlist_4.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_3.dutlist_1.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_3.dutlist_2.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_3.dutlist_3.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_3.dutlist_4.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_4.dutlist_1.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_4.dutlist_2.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_4.dutlist_3.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_4.dutlist_4.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_5.dutlist_1.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_5.dutlist_2.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_5.dutlist_3.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+            //project.sect_5.dutlist_4.OnUpdateStatus += new DutInfolist.StatusUpdatehadler(UpdateStatus);
+
+        }
 
         public ProejctInfo makeRandom()
         {
             ProejctInfo ret = new ProejctInfo();
-
+            Random rd = new Random();
             List<DutInfo> dutlist = new List<DutInfo>();
             for (int j = 0; j < 20; j++)
             {
@@ -77,7 +181,7 @@ namespace RaonShortchaser_UI
                 for (int i = 0; i < 500; i++)
                 {
 
-                    pinlist.Add(new PinInfo(i, new Random().Next()));
+                    pinlist.Add(new PinInfo(i, rd.Next(0,1000)));
                 }
                 dut.setDut(j, pinlist);
                 dutlist.Add(dut);
@@ -211,34 +315,7 @@ namespace RaonShortchaser_UI
 
         }
         
-        private void ChangeMainGrid(List<Pin_Value> pinList)
-        {
-            dataviewmodel.Binding_DataGrid = ChangePinList_To_MainDataGrid(pinList);//Pin_Value 를 출력용 MainDataGrid_class로 바꿔야함
-        }
-        
-        public List<MainDataGrid_class> ChangePinList_To_MainDataGrid(List<Pin_Value> pin_value)
-        {
-            List<MainDataGrid_class> ret= new List<MainDataGrid_class>();
-            MainDataGrid_class willdelete=new MainDataGrid_class();
-            foreach(Pin_Value pinlist in pin_value)
-            {
-                willdelete.setKey_Value(pinlist);
-                if(pinlist.getKey()/100 >1)
-                {
-                    willdelete = ret[pinlist.getKey() % 100];
-                    willdelete.setMeasures(pinlist);
-                }
-                else
-                {
-                    willdelete.setMeasures(new Pin_Value(pinlist.getKey(), pinlist.getValue()));
 
-                }
-                ret.Add(willdelete);
-            }
-
-
-            return ret;
-        }
 
         public void dut_SelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
         {
@@ -252,60 +329,8 @@ namespace RaonShortchaser_UI
             dataviewmodel.ProjectSave();
         }
         
-        private void DutDefinition()
-        {
-            //duts.Add(dut00);
-            //duts.Add(dut01);
-            //duts.Add(dut02);
-            //duts.Add(dut03);
+       
 
-            //duts.Add(dut10);
-            //duts.Add(dut11);
-            //duts.Add(dut12);
-            //duts.Add(dut13);
-
-            //duts.Add(dut20);
-            //duts.Add(dut21);
-            //duts.Add(dut22);
-            //duts.Add(dut23);
-
-            //duts.Add(dut30);
-            //duts.Add(dut31);
-            //duts.Add(dut32);
-            //duts.Add(dut33);
-
-            //duts.Add(dut40);
-            //duts.Add(dut41);
-            //duts.Add(dut42);
-            //duts.Add(dut43);
-
-            foreach(DutControl dut in duts)
-            {
-
-            }
-
-        }
-
-        public DutClass test(int num)
-        {
-            DutClass ret=new DutClass();
-            List<Dut> listdut = new List<Dut>();
-
-            listdut.Add(new Dut(num,retpin()));
-
-            ret.setDutList(listdut);
-            return ret;
-        }
-        public List<Pin_Value> retpin()
-        {
-            List<Pin_Value> pinvalue = new List<Pin_Value>();
-            Random rd = new Random();
-            for (int i = 0; i < 500; i++)
-            {
-                pinvalue.Add(new Pin_Value(i, rd.Next()));
-            }
-            return pinvalue;
-        }
 
     }
 }
